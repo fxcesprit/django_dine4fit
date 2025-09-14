@@ -1,0 +1,50 @@
+*, *::before, *::after{box-sizing: border-box;}
+
+body {
+    margin: 0;
+    background-color: #F5F5F5;
+}
+
+a {
+    text-decoration: none;
+    color: #000;
+}
+
+a:visited {
+    color: #000;
+}
+
+ul {
+    margin: 0;
+    padding: 2rem;
+}
+
+li {
+    list-style: none;
+}
+
+.header {
+    padding: 1rem 2rem;
+    box-shadow: 0 0 30px #000
+}
+
+.header>div {
+    display: inline-block;
+}
+
+.content {
+    padding: 2rem;
+}
+
+.content_top {
+    text-align: center;
+}
+
+.search {
+    display: inline-block;
+    padding: auto;
+}
+
+.dish_composition_icon {
+    display: inline-block;
+}

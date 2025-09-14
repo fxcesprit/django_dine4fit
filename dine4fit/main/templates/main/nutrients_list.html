@@ -1,3 +1,36 @@
-{% for nutrient in data %}
-<p>{{ nutrient }}</p>
-{% endfor %}
+{% extends 'main/layout.html' %}
+{% load static %}
+
+{% block title %}Нутриенты{% endblock %}
+
+{% block content %}
+    <div class="content_top">
+        <div class="search">
+        <form method="post" action="{% url 'nutrients_list_url' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input name="search_text" type="text", placeholder="Поиск" value="{{ search_text }}" >
+            <input type="submit" value="Найти">
+        </form>
+    </div>
+
+    <div class="dish_composition_icon">
+        <a href="{% url 'dish_composition_url' %}"><img src="" alt="dish_composition"></a>
+    </div>
+    </div>
+    
+    <ul>
+        {% for nutrient in nutrients %}
+            <li>
+                <a href="{% url 'nutrient_info_url' nutrient.id %}">
+                    <div>
+                        <p>{{ nutrient.name }}</p>
+                        <p>{{ nutrient.daily_dose_min }}-{{ nutrient.daily_dose_max }} г</p>
+                        <p>{{ nutrient.short_desc }}</p>
+                    </div>
+                </a>     
+            </li>
+        {% empty %}
+            <li>Список пуст</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

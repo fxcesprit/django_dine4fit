@@ -20,5 +20,10 @@ from django.urls import include, path
 from . import views
 
 urlpatterns = [
-    path('', views.GetNutrients)
+    path('', views.GetNutrients, name='nutrients_list_url'),
+    path('nutrient/<int:nutrient_id>', views.GetNutrientInfo, name='nutrient_info_url'),
+    path('dish_composition', views.GetDishComposition, name='dish_composition_url'),
+        
+    #Other
+    path('.well-known/appspecific/com.chrome.devtools.json', views.chrome_devtools), # убирает ошибку GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1 404 2710 при открытии кода страницы
 ]
