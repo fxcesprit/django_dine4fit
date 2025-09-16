@@ -4,5 +4,9 @@
 {% block title %} Состав блюда {% endblock %}
 
 {% block content %}
-<p> тест </p>
+    <p> Рассчет состава №{{ dish_composition_order.id }} </p>
+
+    {% for nutrient in nutrients %}
+        <p>{{ nutrient }}</p>
+    {% endfor %}
 {% endblock %}

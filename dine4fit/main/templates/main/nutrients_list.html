@@ -14,7 +14,9 @@
     </div>
 
     <div class="dish_composition_icon">
-        <a href="{% url 'dish_composition_url' %}"><img src="" alt="dish_composition"></a>
+        <a href="{% url 'dish_composition_url' dish_composition_order_id %}"><img src="" alt="dish_composition">
+            Рассчет рациона {% if nutrient_types_amount %}{{nutrient_types_amount}}{% endif %}
+        </a>
     </div>
     </div>
     
