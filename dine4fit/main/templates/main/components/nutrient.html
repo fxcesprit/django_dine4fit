@@ -1,0 +1,12 @@
+<a href="{% url 'nutrient_info_url' nutrient.id %}" class="nutrient">
+    <img src="{{ nutrient.img }}" alt="nutrient">
+    <div class="nutrient_info">
+        <p class="title">{{ nutrient.name }}</p>
+        <p class="daily_dose">{{ nutrient.daily_dose_min }} - {{ nutrient.daily_dose_max }} г / кг массы тела</p>
+        <p class="desc">{{ nutrient.short_desc }}</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="btn_desc">
+        Описание
+    </div>
+</a>

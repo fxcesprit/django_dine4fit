@@ -1,0 +1,23 @@
+{% extends 'main/pages/layout.html' %}
+{% load static %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'main/css/pages/nutrient_info.css' %}">
+{% endblock %}
+
+{% block title %}{{ nutrient.name }}{% endblock %}
+
+{% block content %}
+<div class="nutrient_desc">
+    <div class="top">
+        <img src="{{ nutrient.img }}" alt="">
+        <div class="top_text">
+            <p class="title">{{ nutrient.name }} - описание</p>
+            <p class="daily_dose">Суточная норма: {{ nutrient.daily_dose_min }} - {{ nutrient.daily_dose_max }} г / кг массы тела</p>
+        </div>
+    </div>
+    <div class="full_desc">
+        <p>{{ nutrient.full_desc }}</p>
+    </div>
+</div>
+{% endblock %}

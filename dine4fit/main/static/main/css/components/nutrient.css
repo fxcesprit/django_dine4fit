@@ -1,0 +1,59 @@
+.nutrient {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 14.5rem;
+    height: 22.5rem;
+    background-color: #EDEDED;
+    border-radius: 0.625rem;
+
+    padding: 1.25rem 0.625rem;
+}
+
+.nutrient img {
+    width: 10rem;
+    height: 10rem;
+    object-fit: cover;
+    border-radius: 0.625rem;
+}
+
+.nutrient p {
+    margin: 0;
+}
+
+.nutrient .title {
+    font-weight: 700;
+    font-size: 20px;
+    text-align: center;
+    color:#1c1c1c;
+}
+
+.nutrient .daily_dose {
+    font-weight: 300;
+    color:#515151;
+    font-size: 14px;
+    text-align: center;
+}
+
+.nutrient .desc {
+    font-weight: 700;
+    color:#515151;
+    font-size: 14px;
+    text-align: center;
+}
+
+.btn_desc {
+    background-color: #689F38;
+    border-radius: 0.625rem;
+    width: 200px;
+    height: 32px;
+    color: white;
+    line-height: 32px;
+    text-align: center;
+}
+
+.btn_desc:hover {
+    background-color: #588F28;
+}

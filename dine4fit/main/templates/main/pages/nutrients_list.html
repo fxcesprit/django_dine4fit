@@ -1,0 +1,24 @@
+{% extends 'main/pages/layout.html' %}
+{% load static %}
+
+{% block title %}Нутриенты{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'main/css/pages/nutrients_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="content_top">
+    <div class="grid_1"></div>
+    <div class="grid_2">{% include 'main/components/search.html' %}</div>
+    <div class="grid_3">{% include 'main/components/dish_composition_btn.html' %}</div>
+</div>
+
+<div class="nutrients">
+    {% for nutrient in nutrients %}
+        {% include 'main/components/nutrient.html' %}
+    {% empty %}
+        <p>Список пуст</p>
+    {% endfor %}
+</div>
+{% endblock %}

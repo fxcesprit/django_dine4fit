@@ -1,0 +1,8 @@
+.nutrients {
+    margin: 2rem;
+    width: 50vw;
+    display: grid;
+    grid-template-columns: repeat(3, 14.5rem);
+    justify-content: center;
+    gap: 2rem;
+}

@@ -1,0 +1,33 @@
+{% extends 'main/pages/layout.html' %}
+{% load static %}
+
+{% block title %} Состав блюда {% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'main/css/pages/dish_composition.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<div class="dish_composition">
+    <div class="input_form">
+        <input name="body_mass" type="text", placeholder="Масса тела..." value="{{ body_mass }}" >
+        <input name="dish_mass" type="text", placeholder="Масса блюда..." value="{{ dish_mass }}" >
+        <input name="dish" type="text", placeholder="Выберите блюдо..." value="{{ dish }}" >
+    </div>
+    <p class="title">Рассчитать нутриенты</p>
+    <div class="nutrients">
+    {% for nutrient in nutrients %}
+        <div class="nutrient_calc">
+            <div class="nutrient_image">
+                <img src="{{ nutrient.img }}" alt="">
+            </div>
+            <div class="nutrient_name">{{ nutrient.name }}</div>
+            <div class="amount_in_dish">Количество в блюде: ...г</div>
+        </div>
+    {% empty %}
+        <p>Выберите нутриенты</p>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

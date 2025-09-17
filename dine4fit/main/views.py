@@ -12,7 +12,7 @@ nutrients = [
         'full_desc': '''Белки — это главный строительный материал организма. Они расщепляются на аминокислоты, которые используются для создания и восстановления мышечной ткани, органов, кожи, волос и ногтей. Также белки входят в состав ферментов, гормонов и антител, играя критическую роль практически во всех биологических процессах — от переваривания пищи до защиты от инфекций. Достаточное потребление белка необходимо для поддержания силы, восстановления после тренировок и долгосрочного здоровья.
 
 Основные источники белка: мясо, птица, рыба, молоко, орехи, бобовые, зерновые, овощи, фрукты, ягоды и грибы.''',
-        'img': '',
+        'img': 'http://127.0.0.1:9000/bucket/%D0%B1%D0%B5%D0%BB%D0%BE%D0%BA.jpg',
     },
     {
         'id': 2,
@@ -21,7 +21,7 @@ nutrients = [
         'daily_dose_max': 1.2,
         'short_desc': 'Запас энергии, защита органов и усвоение витаминов',
         'full_desc': '',
-        'img': '',
+        'img': 'http://127.0.0.1:9000/bucket/Healthy-fats.webp',
     },
     {
         'id': 3,
@@ -30,7 +30,7 @@ nutrients = [
         'daily_dose_max': 5,
         'short_desc': 'Основной источник энергии',
         'full_desc': '',
-        'img': '',
+        'img': 'http://127.0.0.1:9000/bucket/shutterstock_731206732.webp',
     },
     {
         'id': 4,
@@ -56,11 +56,13 @@ dish_nutrients = [
     {
         'nutrient_id': 1,
         'dish_composition_order_id': 1,
+        'amount_in_dish': None,
     },
 
     {
-        'nutrient_id': 4,
+        'nutrient_id': 2,
         'dish_composition_order_id': 1,
+        'amount_in_dish': None,
     }
 ]
 
@@ -103,22 +105,22 @@ def GetNutrients(request, dish_composition_order_id = 1):
         'nutrient_types_amount': nutrient_types_amount,
         'dish_composition_order_id': dish_composition_order_id,
     }
-    return render(request, 'main/nutrients_list.html', data)
+    return render(request, 'main/pages/nutrients_list.html', data)
 
 
 def GetNutrientInfo(request, nutrient_id):
-
+    """Рендер страницы нутриента"""
     nutrient = next((n for n in nutrients if n['id'] == nutrient_id), None)
 
     if nutrient:
         data = {'nutrient' : nutrient}
-        return render(request, 'main/nutrient_info.html', data)
+        return render(request, 'main/pages/nutrient_info.html', data)
     else:
         return HttpResponse(status=404)
 
 
 def GetDishComposition(request, dish_composition_order_id):
-
+    """Рендер страницы состава блюда"""
     dish_composition_order = next((o for o in dish_composition_orders if o['id'] == dish_composition_order_id), None)
     nutrient_ids = [rec['nutrient_id'] for rec in dish_nutrients if rec['dish_composition_order_id'] == dish_composition_order_id]
     chosen_nutrients = [nutrient for nutrient in nutrients if nutrient['id'] in nutrient_ids]
@@ -128,4 +130,5 @@ def GetDishComposition(request, dish_composition_order_id):
         'dish_composition_order': dish_composition_order,
         'nutrients': chosen_nutrients,
     }
-    return render(request, 'main/dish_composition.html', data)
+
+    return render(request, 'main/pages/dish_composition.html', data)

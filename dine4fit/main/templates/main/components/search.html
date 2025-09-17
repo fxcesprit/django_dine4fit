@@ -1,0 +1,7 @@
+<div class="search">
+    <form method="post" action="{% url 'nutrients_list_url' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input name="search_text" type="text", placeholder="Ищите нутриенты..." value="{{ search_text }}" >
+        <!-- <input type="submit" value="Найти"> -->
+    </form>
+</div>

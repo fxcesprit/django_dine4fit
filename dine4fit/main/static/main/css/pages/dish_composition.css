@@ -1,0 +1,74 @@
+.dish_composition {
+    width: 840px;
+}
+
+.input_form {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input_form input {
+    width: 50%;
+    height: 2.5rem;
+    font-size: 1rem;
+    background-color: inherit;
+    border: 1px solid #cfcfcf;
+    color:#515151;
+    
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.input_form input::placeholder {
+    color:#cfcfcf;
+}
+
+p.title {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.nutrients {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+.nutrient_calc {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1rem;
+    width: 100%;
+
+    display: grid;
+    grid-template-columns: 80px 120px 1fr;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nutrient_calc img {
+    width: 5rem;
+    height: 5rem;
+    object-fit: cover;
+    border-radius: 0.625rem;
+}
+
+.amount_in_dish {
+    text-align: right;
+}
+
+.nutrient_name {
+    font-weight: 700;
+}
+
+.amount_in_dish {
+    font-weight: 900;
+}

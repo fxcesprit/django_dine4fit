@@ -1,17 +1,22 @@
-*, *::before, *::after{box-sizing: border-box;}
+@import 'components/search.css';
+@import 'components/dish_composition_btn.css';
+@import 'components/nutrient.css';
+
+*, *::before, *::after{box-sizing: border-box; font-family: "Inter", sans-serif;}
 
 body {
     margin: 0;
     background-color: #F5F5F5;
+    color: #515151
 }
 
 a {
     text-decoration: none;
-    color: #000;
+    color: #515151;
 }
 
 a:visited {
-    color: #000;
+    color: #515151;
 }
 
 ul {
@@ -24,8 +29,9 @@ li {
 }
 
 .header {
-    padding: 1rem 2rem;
-    box-shadow: 0 0 30px #000
+    padding: 1.25rem 2rem;
+    height: 5rem;
+    box-shadow: 0 0 30px #000;
 }
 
 .header>div {
@@ -34,17 +40,28 @@ li {
 
 .content {
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.header_content {
+    height: 2.5rem;
 }
 
 .content_top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     text-align: center;
+    height: 2.5rem;
+    width: 100%;
 }
 
-.search {
-    display: inline-block;
-    padding: auto;
+.grid_3 {
+    display: flex;
+    justify-content: flex-end;
 }
 
-.dish_composition_icon {
-    display: inline-block;
+.main_icon > a > img {
+    height: 2.5rem;
 }
