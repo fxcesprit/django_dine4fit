@@ -54,15 +54,17 @@ nutrients = [
 
 dish_nutrients = [
     {
-        'nutrient_id': 1,
         'dish_composition_order_id': 1,
-        'amount_in_dish': None,
+        'nutrient_id': 1,
+        'amount_in_dish': 10,
+        'daily_dose_percentage': 2,
     },
 
     {
-        'nutrient_id': 2,
         'dish_composition_order_id': 1,
-        'amount_in_dish': None,
+        'nutrient_id': 2,
+        'amount_in_dish': 12,
+        'daily_dose_percentage': 3,
     }
 ]
 
@@ -70,7 +72,7 @@ dish_composition_orders = [
     {
         'id': 1,
         'dish': 'egg',
-        'human_mass': 80,
+        'body_mass': 80,
         'dish_mass': 100,
     },
 ]
@@ -85,23 +87,20 @@ def chrome_devtools(request):
 def GetNutrients(request, dish_composition_order_id = 1):
     """Рендер страницы нутриентов + поиск"""
 
-    search_text = ''
+    nutrient_search_text = request.GET.get('nutrient_search_text', '')
     nutrient_types_amount = len([rec for rec in dish_nutrients if rec['dish_composition_order_id'] == dish_composition_order_id])
-
-    if request.method == 'POST':
-        search_text = request.POST.get('search_text', '').strip()
     
-    if search_text:
+    if nutrient_search_text:
         filtered_nutrients = [
             nutrient for nutrient in nutrients
-            if search_text.lower() in nutrient['name'].lower()
+            if nutrient_search_text.lower() in nutrient['name'].lower()
         ]
     else:
         filtered_nutrients = nutrients
     
     data = {
         'nutrients': filtered_nutrients,
-        'search_text': search_text,
+        'nutrient_search_text': nutrient_search_text,
         'nutrient_types_amount': nutrient_types_amount,
         'dish_composition_order_id': dish_composition_order_id,
     }
@@ -121,14 +120,18 @@ def GetNutrientInfo(request, nutrient_id):
 
 def GetDishComposition(request, dish_composition_order_id):
     """Рендер страницы состава блюда"""
+    # Селект заказа по айди
     dish_composition_order = next((o for o in dish_composition_orders if o['id'] == dish_composition_order_id), None)
-    nutrient_ids = [rec['nutrient_id'] for rec in dish_nutrients if rec['dish_composition_order_id'] == dish_composition_order_id]
-    chosen_nutrients = [nutrient for nutrient in nutrients if nutrient['id'] in nutrient_ids]
-
+    # Селект и join нутриентов в заказе
+    dish_nutrients_local = [
+        rec | next((n for n in nutrients if n['id'] == rec['nutrient_id']), None) # join нутриента в блюде и информации о нутриенте
+        for rec in dish_nutrients 
+        if rec['dish_composition_order_id'] == dish_composition_order_id
+    ]
 
     data = {
         'dish_composition_order': dish_composition_order,
-        'nutrients': chosen_nutrients,
+        'dish_nutrients': dish_nutrients_local,
     }
 
     return render(request, 'main/pages/dish_composition.html', data)
