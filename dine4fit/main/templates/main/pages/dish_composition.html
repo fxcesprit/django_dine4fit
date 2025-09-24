@@ -11,9 +11,9 @@
 {% block content %}
 <div class="dish_composition">
     <div class="input_form">
-        <input name="body_mass" type="text", placeholder="Масса тела..." value="{{ dish_composition_order.body_mass }}" >
-        <input name="dish_mass" type="text", placeholder="Масса блюда..." value="{{ dish_composition_order.dish_mass }}" >
-        <input name="dish" type="text", placeholder="Выберите блюдо..." value="{{ dish_composition_order.dish }}" >
+        <div class=""><span>Масса тела:</span><input name="body_mass" type="text", placeholder="Масса тела..." value="{{ dish_composition_order.body_mass }}" ><span>кг</span></div>
+        <div class=""><span>Масса блюда:</span><input name="dish_mass" type="text", placeholder="Масса блюда..." value="{{ dish_composition_order.dish_mass }}" ><span>г</span></div>
+        <div class=""><span>Блюдо:</span><input name="dish" type="text", placeholder="Выберите блюдо..." value="{{ dish_composition_order.dish }}" ><span></span></div>
     </div>
     <p class="title">Рассчитать нутриенты</p>
     <div class="nutrients">

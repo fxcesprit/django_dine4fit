@@ -71,7 +71,7 @@ dish_nutrients = [
 dish_composition_orders = [
     {
         'id': 1,
-        'dish': 'egg',
+        'dish': 'яйцо',
         'body_mass': 80,
         'dish_mass': 100,
     },

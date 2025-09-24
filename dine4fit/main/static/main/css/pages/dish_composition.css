@@ -72,3 +72,24 @@ p.title {
 .amount_in_dish {
     font-weight: 900;
 }
+
+.input_form input {
+    width: 20rem;
+}
+
+.input_form div {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    align-items: center;
+    gap: .5rem;
+}
+
+.input_form div :first-child{
+    text-align: right;
+}
+
+.input_form input {
+    width: 12rem;
+    padding: 0 .5rem;
+    text-align: right;
+}
