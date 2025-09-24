@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from .models import Nutrient
 
 
 nutrients = [
@@ -90,16 +91,8 @@ def GetNutrients(request, dish_composition_order_id = 1):
     nutrient_search_text = request.GET.get('nutrient_search_text', '')
     nutrient_types_amount = len([rec for rec in dish_nutrients if rec['dish_composition_order_id'] == dish_composition_order_id])
     
-    if nutrient_search_text:
-        filtered_nutrients = [
-            nutrient for nutrient in nutrients
-            if nutrient_search_text.lower() in nutrient['name'].lower()
-        ]
-    else:
-        filtered_nutrients = nutrients
-    
     data = {
-        'nutrients': filtered_nutrients,
+        'nutrients': Nutrient.objects.filter(name__icontains=nutrient_search_text),
         'nutrient_search_text': nutrient_search_text,
         'nutrient_types_amount': nutrient_types_amount,
         'dish_composition_order_id': dish_composition_order_id,
