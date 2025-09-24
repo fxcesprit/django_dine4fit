@@ -20,12 +20,12 @@
     {% for nutrient in dish_nutrients %}
         <div class="nutrient_calc">
             <div class="nutrient_image">
-                <img src="{{ nutrient.img }}" alt="">
+                <img src="{{ nutrient.nutrient.img_url }}" alt="">
             </div>
-            <div class="nutrient_name">{{ nutrient.name }}</div>
+            <div class="nutrient_name">{{ nutrient.nutrient.name }}</div>
             <div class="amount_in_dish">
-                <p>Количество в блюде: {{ nutrient.amount_in_dish}}г</p>
-                <p>Процент дневной нормы: {{nutrient.daily_dose_percentage}}%</p>
+                <p>Количество в блюде: {{ nutrient.nutrient.amount_in_dish}}г</p>
+                <p>Ваш процент дневной нормы: {{nutrient.nutrient.daily_dose_percentage}}%</p>
             </div>
         </div>
     {% empty %}
