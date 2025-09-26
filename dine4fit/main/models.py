@@ -54,13 +54,32 @@ class DishCompositionRequest(models.Model):
     client = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_orders', verbose_name='Клиент')
     manager = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='managed_orders', blank=True, null=True, verbose_name='Менеджер')
 
-    body_mass = models.IntegerField(blank=True)
-    dish_mass = models.IntegerField(blank=True)
-    dish = models.ForeignKey(Dish, on_delete=models.DO_NOTHING, blank=True)
+    body_mass = models.IntegerField(blank=True, default=70)
+    dish_mass = models.IntegerField(blank=True, default=500)
+    dish = models.ForeignKey(Dish, on_delete=models.DO_NOTHING, blank=True, default=Dish.objects.first().pk)
+
+    
+    def calculate_nutrients(self):
+        req_nutrients = DishCompositionNutrients.objects.filter(dish_composition_request = self.id)
+        
+        for nutrient in req_nutrients:
+            nutrient.quantity_in_dish = self.dish.nutrients[f'{nutrient.nutrient.name}'] * (self.dish_mass / 1000)
+            nutrient.daily_dose_percentage = (nutrient.quantity_in_dish / float((self.body_mass * (nutrient.nutrient.daily_dose_max + nutrient.nutrient.daily_dose_min) / 2))) * 100
+            nutrient.save()
+            #print(f"Произошел рассчет нутриентов: {nutrient.quantity_in_dish}, {nutrient.daily_dose_percentage}")
+
+
+    def __setattr__(self, name, value):
+        if name == "status" and value == 'CO':
+            self.calculate_nutrients()
+
+        return super().__setattr__(name, value)
+    
 
     def __str__(self):
         return f"Запрос на описание блюда №{self.id}"
     
+
     class Meta:
         verbose_name = 'Описание блюда'
         verbose_name_plural = 'Описания блюд'
