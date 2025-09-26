@@ -43,27 +43,25 @@
     text-align: center;
 }
 
-.btn_desc {
+.btn {
     display: inline-block;
-    background-color: white;
     border-radius: 0.625rem;
-    border: #689F38 1px solid;
-    width: 6rem;
     height: 32px;
-    color: #689F38;
     line-height: 32px;
     text-align: center;
 }
 
-.btn_add {
-    display: inline-block;
-    background-color: #689F38;
-    border-radius: 0.625rem;
+.btn_desc {
     width: 6rem;
-    height: 32px;
+    background-color: white;
+    border: #689F38 1px solid;
+    color: #689F38;
+}
+
+.btn_add {
+    width: 6rem;
+    background-color: #689F38;
     color: white;
-    line-height: 32px;
-    text-align: center;
 }
 
 .btn_desc:hover {

@@ -54,9 +54,9 @@ class DishCompositionRequest(models.Model):
     client = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_orders', verbose_name='Клиент')
     manager = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='managed_orders', blank=True, null=True, verbose_name='Менеджер')
 
-    body_mass = models.IntegerField()
-    dish_mass = models.IntegerField()
-    dish = models.ForeignKey(Dish, on_delete=models.DO_NOTHING)
+    body_mass = models.IntegerField(blank=True)
+    dish_mass = models.IntegerField(blank=True)
+    dish = models.ForeignKey(Dish, on_delete=models.DO_NOTHING, blank=True)
 
     def __str__(self):
         return f"Запрос на описание блюда №{self.id}"

@@ -15,14 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import path
 
 from . import views
 
 urlpatterns = [
+    #GET
     path('', views.GetNutrients, name='nutrients_list_url'),
     path('nutrient/<int:nutrient_id>', views.GetNutrientInfo, name='nutrient_info_url'),
     path('dish_composition/<int:dish_composition_request_id>', views.GetDishComposition, name='dish_composition_url'),
+
+    #POST
+    path('nutrient/add_dish_composition_nutrient/<int:nutrient_id>', views.AddDishCompositionNutrient, name='add_dish_composition_nutrient_url'),
+    path('dish_composition/<int:dish_composition_request_id>/delete', views.DeleteDishComposition, name='delete_dish_composition_url'),
         
     #Other
     path('.well-known/appspecific/com.chrome.devtools.json', views.chrome_devtools), # убирает ошибку GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1 404 2710 при открытии кода страницы

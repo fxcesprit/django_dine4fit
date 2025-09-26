@@ -93,3 +93,15 @@ p.title {
     padding: 0 .5rem;
     text-align: right;
 }
+
+.btn_delete {
+    width: 10rem;
+    color: white;
+    background-color: #ff7f50;
+    border: #ff7f50 1px solid;
+    margin-top: 2rem;
+}
+
+.btn_delete:hover {
+    background-color: #ef6f40;
+}

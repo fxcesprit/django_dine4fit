@@ -1,4 +1,4 @@
-<a href="{% url 'nutrient_info_url' nutrient.id %}" class="nutrient">
+<div class="nutrient">
     <img src="{{ nutrient.img_url }}" alt="nutrient">
     <div class="nutrient_info">
         <p class="title">{{ nutrient.name }}</p>
@@ -6,11 +6,11 @@
         <p class="desc">{{ nutrient.short_desc }}</p>
     </div>
     <div class="buttons">
-        <div class="btn btn_desc">
-            Описание
-        </div>
-        <div class="btn btn_add">
-            Добавить
-        </div>
+        <a href="{% url 'nutrient_info_url' nutrient.id %}">
+            <div class="btn btn_desc">Описание</div>
+        </a>
+        <a href="{% url 'add_dish_composition_nutrient_url' nutrient.id %}">
+            <div class="btn btn_add">Добавить</div>
+        </a>
     </div>
-</a>
+</div>

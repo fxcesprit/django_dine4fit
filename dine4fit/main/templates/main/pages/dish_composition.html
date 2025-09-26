@@ -17,20 +17,23 @@
     </div>
     <p class="title">Рассчитать нутриенты</p>
     <div class="nutrients">
-    {% for nutrient in dish_nutrients %}
+    {% for dish_nutrient in dish_nutrients %}
         <div class="nutrient_calc">
             <div class="nutrient_image">
-                <img src="{{ nutrient.nutrient.img_url }}" alt="">
+                <img src="{{ dish_nutrient.nutrient.img_url }}" alt="">
             </div>
-            <div class="nutrient_name">{{ nutrient.nutrient.name }}</div>
+            <div class="nutrient_name">{{ dish_nutrient.nutrient.name }}</div>
             <div class="amount_in_dish">
-                <p>Количество в блюде: {{ nutrient.nutrient.amount_in_dish}}г</p>
-                <p>Ваш процент дневной нормы: {{nutrient.nutrient.daily_dose_percentage}}%</p>
+                <p>Количество в блюде: {{ dish_nutrient.nutrient.amount_in_dish}}г</p>
+                <p>Ваш процент дневной нормы: {{dish_nutrient.nutrient.daily_dose_percentage}}%</p>
             </div>
         </div>
     {% empty %}
         <p>Выберите нутриенты</p>
     {% endfor %}
     </div>
+    <a href="{% url 'delete_dish_composition_url' dish_composition_order.id %}">
+        <div class="btn btn_delete">Удалить описание</div>
+    </a>
 </div>
 {% endblock %}
