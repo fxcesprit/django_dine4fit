@@ -17,18 +17,21 @@ def GetNutrients(request):
 
     try:
         dish_composition_draft = DishCompositionRequest.objects.get(client=request.user, status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
+        nutrient_types_amount = DishCompositionNutrients.objects.filter(dish_composition_request = dish_composition_draft.pk).count()
+        data = {
+            'dish_composition_order_id': dish_composition_draft.pk,
+            'nutrient_types_amount': nutrient_types_amount,
+            }
 
+        
     except:
-        dish_composition_draft = DishCompositionRequest.objects.create(client=request.user)
+        data = {}
 
     nutrient_search_text = request.GET.get('nutrient_search_text', '')
-    nutrient_types_amount = DishCompositionNutrients.objects.filter(dish_composition_request = dish_composition_draft.pk).count()
     
-    data = {
+    data = data | {
         'nutrients': Nutrient.objects.filter(name__icontains=nutrient_search_text, is_active = True),
         'nutrient_search_text': nutrient_search_text,
-        'nutrient_types_amount': nutrient_types_amount,
-        'dish_composition_order_id': dish_composition_draft.pk
     }
     return render(request, 'main/pages/nutrients_list.html', data)
 
@@ -62,9 +65,14 @@ def GetDishComposition(request, dish_composition_request_id):
 
 
 @login_required
-def AddDishCompositionNutrient(reqeust, nutrient_id):
+def AddDishCompositionNutrient(request, nutrient_id):
 
-    dish_composition_draft = DishCompositionRequest.objects.get(client=reqeust.user, status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
+    try:
+        dish_composition_draft = DishCompositionRequest.objects.get(client=request.user, status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
+
+    except:
+        dish_composition_draft = DishCompositionRequest.objects.create(client=request.user)
+        
     selected_nutrient = get_object_or_404(Nutrient, id=nutrient_id)
 
     DishCompositionNutrients.objects.get_or_create(
@@ -76,7 +84,7 @@ def AddDishCompositionNutrient(reqeust, nutrient_id):
 
 
 @login_required
-def DeleteDishComposition(reqeust, dish_composition_request_id):
+def DeleteDishComposition(request, dish_composition_request_id):
     
     dish_comp_req = get_object_or_404(DishCompositionRequest, id=dish_composition_request_id)
     
