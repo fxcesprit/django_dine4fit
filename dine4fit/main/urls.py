@@ -42,8 +42,8 @@ urlpatterns = [
     path('api/v1/dish_compositions/<int:pk>/complete', views.complete_dish_composition),
     path('api/v1/dish_compositions/<int:pk>/delete', views.delete_dish_composition),
 
-    path('api/v1/dish_compositions/<int:dish_compositions_pk>/<int:nutrient_pk>/delete', views.delete_dish_composition_nutrient),
-    path('api/v1/dish_compositions/<int:dish_compositions_pk>/<int:nutrient_pk>/put', views.put_dish_composition_nutrient),
+    path('api/v1/dish_compositions/<int:dish_compositions_pk>/nutrient/<int:nutrient_pk>/delete', views.delete_dish_composition_nutrient),
+    path('api/v1/dish_compositions/<int:dish_compositions_pk>/nutrient/<int:nutrient_pk>/put', views.put_dish_composition_nutrient),
 
     path('api/v1/users/<int:pk>', views.UsersAPIView.as_view()),
     path('api/v1/users/register', views.register_user),
