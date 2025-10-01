@@ -54,9 +54,9 @@ class DishCompositionRequest(models.Model):
     client = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_orders', verbose_name='Клиент')
     manager = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='managed_orders', blank=True, null=True, verbose_name='Менеджер')
 
-    body_mass = models.IntegerField(blank=True, default=70)
-    dish_mass = models.IntegerField(blank=True, default=500)
-    dish = models.ForeignKey(Dish, on_delete=models.DO_NOTHING, blank=True, default=Dish.objects.first().pk)
+    body_mass = models.IntegerField(blank=True, null=True, default=70)
+    dish_mass = models.IntegerField(blank=True, null=True, default=500)
+    dish = models.ForeignKey(Dish, on_delete=models.DO_NOTHING, blank=True, null=True, default=Dish.objects.first().pk)
 
     
     def calculate_nutrients(self):
@@ -66,7 +66,6 @@ class DishCompositionRequest(models.Model):
             nutrient.quantity_in_dish = self.dish.nutrients[f'{nutrient.nutrient.name}'] * (self.dish_mass / 1000)
             nutrient.daily_dose_percentage = (nutrient.quantity_in_dish / float((self.body_mass * (nutrient.nutrient.daily_dose_max + nutrient.nutrient.daily_dose_min) / 2))) * 100
             nutrient.save()
-            #print(f"Произошел рассчет нутриентов: {nutrient.quantity_in_dish}, {nutrient.daily_dose_percentage}")
 
 
     def __setattr__(self, name, value):
@@ -89,7 +88,7 @@ class DishCompositionNutrients(models.Model):
     dish_composition_request = models.ForeignKey(DishCompositionRequest, on_delete=models.DO_NOTHING, verbose_name='Запрос на описание')
     nutrient = models.ForeignKey(Nutrient, on_delete=models.DO_NOTHING, verbose_name='Нутриент')
     quantity_in_dish = models.DecimalField(max_digits=10, decimal_places=1, blank=True, null=True, verbose_name='Количество в блюде')
-    daily_dose_percentage = models.IntegerField(verbose_name='Доля в дневной норме', blank=True, null=True)
+    daily_dose_percentage = models.DecimalField(max_digits=10, decimal_places=1, verbose_name='Доля в дневной норме', blank=True, null=True)
 
     def __str__(self):
         return f"{self.dish_composition_request.id}-{self.nutrient.id}"
