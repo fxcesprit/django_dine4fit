@@ -49,6 +49,7 @@ def add_pic(nutrient, pic):
     )
     i = nutrient.id
     img_obj_name = f'Nutrient{i}'
+    print(f'добавлдение изображения {i}')
 
     if not pic:
         return Response({"error": "Нет файла для изображения логотипа."})

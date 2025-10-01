@@ -104,6 +104,7 @@ class NutrientAPIView(APIView):
 def post_img(request, pk, format=None):
     nutrient = get_object_or_404(Nutrient, pk=pk)
     if 'pic' in request.FILES:
+        print('добавляем изображени')
         pic_result = add_pic(nutrient, request.FILES['pic'])
         if 'error' in pic_result.data:
             return pic_result
@@ -199,6 +200,9 @@ def complete_dish_composition(request, pk):
     if dish_composition.status == 'DE':
         return Response({'error': 'Заявка удалена'}, status=status.HTTP_400_BAD_REQUEST)
     
+    if dish_composition.status != 'FO':
+        return Response({'error': 'Заявка должна быть в статусе Formed'}, status=status.HTTP_400_BAD_REQUEST)
+    
     action = request.data.get('action')
 
     if not action or action not in ['complete', 'reject']:
@@ -246,15 +250,15 @@ def delete_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
 
 @api_view(['PUT'])
 def put_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
-    dish_composition = get_object_or_404(dish_composition, pk=dish_composition_pk)
-    nutrient = get_object_or_404(nutrient, pk=nutrient_pk)
+    dish_composition = get_object_or_404(DishCompositionRequest, pk=dish_composition_pk)
+    nutrient = get_object_or_404(Nutrient, pk=nutrient_pk)
 
-    dish_composition_nutrient = get_object_or_404(DishCompositionNutrients, nutrient=nutrient, dish_composition=dish_composition)
+    dish_composition_nutrient = get_object_or_404(DishCompositionNutrients, nutrient=nutrient, dish_composition_request=dish_composition)
     serializer = DishCompositionNutrientSerializer(dish_composition_nutrient, data=request.data)
-    serializer.is_vaild(raise_exception=True)
+    serializer.is_valid(raise_exception=True)
     serializer.save()
 
-    Response(serializer.data)
+    return Response(serializer.data)
 
 
 class UsersAPIView(APIView):

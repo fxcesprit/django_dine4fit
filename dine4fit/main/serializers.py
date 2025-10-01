@@ -12,7 +12,7 @@ class NutrientSerializer(serializers.ModelSerializer):
 
 class DishCompositionNutrientSerializer(serializers.ModelSerializer):
     """Сериализатор для модели связи M2M"""
-    nutrient = NutrientSerializer()
+    nutrient = NutrientSerializer(read_only=True)
     
     class Meta:
         model = DishCompositionNutrients 
