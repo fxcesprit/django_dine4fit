@@ -5,15 +5,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
 
-from .models import Nutrient, DishCompositionNutrients, DishCompositionRequest, AuthUser
+from .models import Nutrient, DishCompositionNutrients, DishCompositionRequest, CustomUser
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
-from .serializers import DishCompositionNutrientSerializer, DishCompositionRequestFlatSerializer, DishCompositionRequestSerializer, NutrientSerializer, AuthUserSerializer
+from .serializers import DishCompositionNutrientSerializer, DishCompositionRequestFlatSerializer, DishCompositionRequestSerializer, NutrientSerializer, UserSerializer
+from drf_yasg.utils import swagger_auto_schema
 
 from .minio import add_pic, delete_pic
 
@@ -33,14 +34,13 @@ class NutrientsAPIView(APIView):
     model_class = Nutrient
     serializer_class = NutrientSerializer
 
-
     def get(self, request, format=None):
         nutrient_search_text = request.GET.get('nutrient_search_text', '')  
         nutrients = self.model_class.objects.filter(name__icontains=nutrient_search_text, is_active = True)
         serializer = self.serializer_class(nutrients, many=True)
         return Response(serializer.data)
 
-
+    @swagger_auto_schema(request_body=NutrientSerializer)
     def post(self, request, format=None):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -52,13 +52,12 @@ class NutrientAPIView(APIView):
     model_class = Nutrient
     serializer_class = NutrientSerializer
 
-
     def get(self, request, pk, format=None):
         nutrient = get_object_or_404(self.model_class, pk=pk)
         serializer = self.serializer_class(nutrient)
         return Response(serializer.data)
     
-
+    @swagger_auto_schema(request_body=NutrientSerializer)
     def post(self, request, pk, format=None):
         selected_nutrient = get_object_or_404(self.model_class, pk=pk)
 
@@ -77,7 +76,7 @@ class NutrientAPIView(APIView):
 
         return Response(serializer.data)
 
-
+    @swagger_auto_schema(request_body=NutrientSerializer)
     def put(self, request, pk, format=None):
         nutrient = get_object_or_404(self.model_class, pk=pk)
         serializer = self.serializer_class(nutrient, data=request.data, partial=True)
@@ -88,7 +87,7 @@ class NutrientAPIView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
+    @swagger_auto_schema(request_body=NutrientSerializer)
     def delete(self, request, pk, format=None):
         nutrient = get_object_or_404(self.model_class, pk=pk)
 
@@ -100,6 +99,7 @@ class NutrientAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@swagger_auto_schema(method='post')
 @api_view(['POST'])    
 def post_img(request, pk, format=None):
     nutrient = get_object_or_404(Nutrient, pk=pk)
@@ -143,6 +143,7 @@ def get_dish_compositions(request):
     return Response(serializer.data)
 
 
+@swagger_auto_schema(method='put', request_body=DishCompositionRequestSerializer)
 @api_view(['PUT'])
 def put_dish_composition(request, pk):
     dish_composition = get_object_or_404(DishCompositionRequest, pk=pk)
@@ -167,6 +168,7 @@ def delete_dish_composition(request, pk):
     return Response({'message': 'Запрос на описание блюда успешно удален'}, status=status.HTTP_204_NO_CONTENT)
 
 
+@swagger_auto_schema(method='put', request_body=DishCompositionRequestFlatSerializer)
 @api_view(['PUT'])
 def submit_dish_composition(request, pk):
     dish_composition = get_object_or_404(DishCompositionRequest, pk=pk)
@@ -193,6 +195,8 @@ def submit_dish_composition(request, pk):
     serializer = DishCompositionRequestFlatSerializer(dish_composition).data
     return Response({'message': 'Запрос на описание блюда сформирован', 'dish_composition': serializer}, status=status.HTTP_200_OK)
 
+
+@swagger_auto_schema(method='put', request_body=DishCompositionRequestFlatSerializer)
 @api_view(['PUT'])
 def complete_dish_composition(request, pk):
     dish_composition = get_object_or_404(DishCompositionRequest, pk=pk)
@@ -248,6 +252,7 @@ def delete_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
         return Response({'error': 'Нутриент в заявке не найден'}, status=status.HTTP_404_NOT_FOUND)
 
 
+@swagger_auto_schema(method='put', request_body=DishCompositionNutrientSerializer)
 @api_view(['PUT'])
 def put_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
     dish_composition = get_object_or_404(DishCompositionRequest, pk=dish_composition_pk)
@@ -261,61 +266,90 @@ def put_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
     return Response(serializer.data)
 
 
-class UsersAPIView(APIView):
-    model_class = AuthUser
-    serializer_class = AuthUserSerializer
+# class UsersAPIView(APIView):
+#     model_class = CustomUser
+#     serializer_class = UserSerializer
 
-    def get(self, request, pk):
-        user = get_object_or_404(self.model_class, pk=pk)
-        serializer = self.serializer_class(user)
-        return Response(serializer.data)
+#     def get(self, request, pk):
+#         user = get_object_or_404(self.model_class, pk=pk)
+#         serializer = self.serializer_class(user)
+#         return Response(serializer.data)
     
-    def put(self, request, pk):
-        user = get_object_or_404(User, id=pk)
-        serializer = self.serializer_class(user, data=request.data, partial=True)
+#     @swagger_auto_schema(request_body=UserSerializer)
+#     def put(self, request, pk):
+#         user = get_object_or_404(User, id=pk)
+#         serializer = self.serializer_class(user, data=request.data, partial=True)
 
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
 
-        return Response(serializer.data)
-
-
-@csrf_exempt
-@api_view(['POST'])
-def register_user(request):
-    data = request.data
-    username = data.get('username')
-    password = data.get('password')
-    email = data.get('email')
-
-    if User.objects.filter(username=username).exists():
-        return Response({'error': 'Пользователь с таким именем уже существует'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        return Response({'error': 'Неверный формат email'}, status=status.HTTP_400_BAD_REQUEST)
-
-    user = User.objects.create_user(username=username, password=password, email=email)
-    return Response({'message': 'Пользователь успешно зарегистрирован'}, status=status.HTTP_201_CREATED)
+#         return Response(serializer.data)
 
 
-@csrf_exempt
-@api_view(['POST'])
-def login_user(request):
-    data = request.data
-    username = data.get('username')
-    password = data.get('password')
+# @csrf_exempt
+# @swagger_auto_schema(method='post')
+# @api_view(['POST'])
+# def register_user(request):
+#     data = request.data
+#     username = data.get('username')
+#     password = data.get('password')
+#     email = data.get('email')
 
-    user = authenticate(request, username=username, password=password)
-    if user is not None:
-        login(request, user)
-        return Response({'message': 'Пользователь успешно вошел в систему'}, status=status.HTTP_200_OK)
-    return Response({'error': 'Неверное имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
+#     if User.objects.filter(username=username).exists():
+#         return Response({'error': 'Пользователь с таким именем уже существует'}, status=status.HTTP_400_BAD_REQUEST)
 
-@csrf_exempt
-@api_view(['POST'])
-def logout_user(request):
-    logout(request)
-    return Response({'message': 'Пользователь успешно вышел из системы'}, status=status.HTTP_200_OK)
+#     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+#         return Response({'error': 'Неверный формат email'}, status=status.HTTP_400_BAD_REQUEST)
+
+#     user = User.objects.create_user(username=username, password=password, email=email)
+#     return Response({'message': 'Пользователь успешно зарегистрирован'}, status=status.HTTP_201_CREATED)
+
+
+# @csrf_exempt
+# @swagger_auto_schema(method='post')
+# @api_view(['POST'])
+# def login_user(request):
+#     data = request.data
+#     username = data.get('username')
+#     password = data.get('password')
+
+#     user = authenticate(request, username=username, password=password)
+#     if user is not None:
+#         login(request, user)
+#         return Response({'message': 'Пользователь успешно вошел в систему'}, status=status.HTTP_200_OK)
+#     return Response({'error': 'Неверное имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
+
+# @csrf_exempt
+# @swagger_auto_schema(method='post')
+# @api_view(['POST'])
+# def logout_user(request):
+#     logout(request)
+#     return Response({'message': 'Пользователь успешно вышел из системы'}, status=status.HTTP_200_OK)
+
+class UserViewSet(viewsets.ModelViewSet):
+    """Класс, описывающий методы работы с пользователями
+    Осуществляет связь с таблицей пользователей в базе данных
+    """
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer
+    model_class = CustomUser
+
+    def create(self, request):
+        """
+        Функция регистрации новых пользователей
+        Если пользователя c указанным в request email ещё нет, в БД будет добавлен новый пользователь.
+        """
+        if self.model_class.objects.filter(email=request.data['email']).exists():
+            return Response({'status': 'Exist'}, status=400)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            print(serializer.data)
+            self.model_class.objects.create_user(email=serializer.data['email'],
+                                     password=serializer.data['password'],
+                                     is_superuser=serializer.data['is_superuser'],
+                                     is_staff=serializer.data['is_staff'])
+            return Response({'status': 'Success'}, status=200)
+        return Response({'status': 'Error', 'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

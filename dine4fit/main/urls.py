@@ -15,9 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+
+from rest_framework import routers
 
 from . import views
+
+router = routers.DefaultRouter()
+router.register(r'user', views.UserViewSet, basename='user')
 
 urlpatterns = [
     #GET
@@ -45,10 +50,11 @@ urlpatterns = [
     path('api/v1/dish_compositions/<int:dish_composition_pk>/nutrient/<int:nutrient_pk>/delete', views.delete_dish_composition_nutrient),
     path('api/v1/dish_compositions/<int:dish_composition_pk>/nutrient/<int:nutrient_pk>/put', views.put_dish_composition_nutrient),
 
-    path('api/v1/users/<int:pk>', views.UsersAPIView.as_view()),
-    path('api/v1/users/register', views.register_user),
-    path('api/v1/users/login', views.login_user),
-    path('api/v1/users/logout', views.logout_user),
+    path('api/v1/', include(router.urls)),
+    # path('api/v1/users/<int:pk>', views.UsersAPIView.as_view()),
+    # path('api/v1/users/register', views.register_user),
+    # path('api/v1/users/login', views.login_user),
+    # path('api/v1/users/logout', views.logout_user),
     
     #Other
     path('.well-known/appspecific/com.chrome.devtools.json', views.chrome_devtools), # убирает ошибку GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1 404 2710 при открытии кода страницы
