@@ -40,6 +40,8 @@ class DishCompositionRequestSerializer(serializers.ModelSerializer):
         many=True,
         read_only=True
     )
+    client = serializers.CharField(source='client.username', read_only=True)
+    manager = serializers.CharField(source='manager.username', read_only=True)
     class Meta:
         model = DishCompositionRequest
         fields = ('status', 'creation_datetime', 'formation_datetime', 'completion_datetime', 'client', 'manager', 'body_mass', 'dish_mass', 'dish', 'nutrients')

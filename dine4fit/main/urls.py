@@ -51,6 +51,8 @@ urlpatterns = [
     path('api/v1/dish_compositions/<int:dish_composition_pk>/nutrient/<int:nutrient_pk>/put', views.put_dish_composition_nutrient),
 
     path('api/v1/', include(router.urls)),
+    path('login/',  views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     # path('api/v1/users/<int:pk>', views.UsersAPIView.as_view()),
     # path('api/v1/users/register', views.register_user),
     # path('api/v1/users/login', views.login_user),

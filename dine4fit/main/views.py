@@ -12,22 +12,74 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny
+from main.permissions import IsAdmin, IsManager
+
 from .serializers import DishCompositionNutrientSerializer, DishCompositionRequestFlatSerializer, DishCompositionRequestSerializer, NutrientSerializer, UserSerializer
 from drf_yasg.utils import swagger_auto_schema
 
 from .minio import add_pic, delete_pic
 
+from django.conf import settings
+import redis
+import uuid
+
 import re
 
+
 # Create your views here.
-def user():
-    try:
-        user1 = User.objects.get(id=1)
-    except:
-        user1 = User(id=1, first_name="Александр", last_name="Хомутинников", password='1234', username="user1")
-        user1.save()
-    return user1
+
+session_storage = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
+
+def method_permission_classes(classes):
+    def decorator(func):
+        def decorated_func(self, *args, **kwargs):
+            self.permission_classes = classes        
+            self.check_permissions(self.request)
+            return func(self, *args, **kwargs)
+        return decorated_func
+    return decorator
+
+
+@swagger_auto_schema(method='post', request_body=UserSerializer)
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+@csrf_exempt
+def login_view(request):
+    email = request.data["email"]
+    password = request.data["password"]
+    user = authenticate(request, email=email, password=password)
+    if user is not None:
+        random_key = uuid.uuid4()
+        session_storage.set(str(random_key), email)
+        if user.is_staff or user.is_superuser:
+            response = Response({'status': 'ok', 'detail': {'is_staff': user.is_staff, 'is_superuser': user.is_superuser}})
+        else:
+            response = Response({'status': 'ok'})
+
+        response.set_cookie("session_id", random_key)
+
+        return response
+    else:
+        return Response({'status': 'error', 'error': 'login failed'})
+
+
+@csrf_exempt
+def logout_view(request):
+    logout(request._request)
+    return Response({'status': 'Success'})
+
+
+# def user():
+#     try:
+#         user1 = User.objects.get(id=1)
+#     except:
+#         user1 = User(id=1, first_name="Александр", last_name="Хомутинников", password='1234', username="user1")
+#         user1.save()
+#     return user1
 
 
 class NutrientsAPIView(APIView):
@@ -40,6 +92,7 @@ class NutrientsAPIView(APIView):
         serializer = self.serializer_class(nutrients, many=True)
         return Response(serializer.data)
 
+    @method_permission_classes((IsManager, ))
     @swagger_auto_schema(request_body=NutrientSerializer)
     def post(self, request, format=None):
         serializer = self.serializer_class(data=request.data)
@@ -51,6 +104,8 @@ class NutrientsAPIView(APIView):
 class NutrientAPIView(APIView):
     model_class = Nutrient
     serializer_class = NutrientSerializer
+    permission_classes = []
+    authentication_classes = []
 
     def get(self, request, pk, format=None):
         nutrient = get_object_or_404(self.model_class, pk=pk)
@@ -59,15 +114,23 @@ class NutrientAPIView(APIView):
     
     @swagger_auto_schema(request_body=NutrientSerializer)
     def post(self, request, pk, format=None):
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+
+        if not user_login:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+        user = CustomUser.objects.get(email=user_login)
+
         selected_nutrient = get_object_or_404(self.model_class, pk=pk)
 
         serializer = self.serializer_class(selected_nutrient) 
 
         try:
-            dish_composition_draft = DishCompositionRequest.objects.get(client=user(), status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
+            dish_composition_draft = DishCompositionRequest.objects.get(client=user, status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
 
         except:
-            dish_composition_draft = DishCompositionRequest.objects.create(client=user())
+            dish_composition_draft = DishCompositionRequest.objects.create(client=user)
 
         DishCompositionNutrients.objects.get_or_create(
             dish_composition_request=dish_composition_draft,
@@ -77,6 +140,8 @@ class NutrientAPIView(APIView):
         return Response(serializer.data)
 
     @swagger_auto_schema(request_body=NutrientSerializer)
+    @method_permission_classes((IsManager, ))
+    @csrf_exempt
     def put(self, request, pk, format=None):
         nutrient = get_object_or_404(self.model_class, pk=pk)
         serializer = self.serializer_class(nutrient, data=request.data, partial=True)
@@ -88,6 +153,7 @@ class NutrientAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @swagger_auto_schema(request_body=NutrientSerializer)
+    @method_permission_classes((IsManager, ))
     def delete(self, request, pk, format=None):
         nutrient = get_object_or_404(self.model_class, pk=pk)
 
@@ -101,6 +167,7 @@ class NutrientAPIView(APIView):
 
 @swagger_auto_schema(method='post')
 @api_view(['POST'])    
+@permission_classes([IsManager])
 def post_img(request, pk, format=None):
     nutrient = get_object_or_404(Nutrient, pk=pk)
     if 'pic' in request.FILES:
@@ -124,14 +191,33 @@ def get_dish_composition_draft(request):
 
 
 @api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def get_dish_compositions(request):
+    try:
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+        if not user_login:
+            return Response({'status': 'Error', 'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+    except:
+        return Response({'status': 'Error', 'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = CustomUser.objects.get(email=user_login)
+    if user.is_staff or user.is_superuser:
+        dish_compositions = DishCompositionRequest.objects.exclude(
+            status__in=['DR', 'DE']
+        )
+    else:
+        dish_compositions = DishCompositionRequest.objects.filter(
+            client=user
+        ).exclude(
+            status__in=['DR', 'DE']
+        )
+    
+    
     dish_composition_status = request.GET.get('dish_composition_status')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-
-    dish_compositions = DishCompositionRequest.objects.exclude(
-        status__in=['DR', 'DE']
-    )
 
     if dish_composition_status:
         dish_compositions = dish_compositions.filter(status=dish_composition_status)
@@ -170,61 +256,87 @@ def delete_dish_composition(request, pk):
 
 @swagger_auto_schema(method='put', request_body=DishCompositionRequestFlatSerializer)
 @api_view(['PUT'])
+@authentication_classes([])
+@permission_classes([])
 def submit_dish_composition(request, pk):
+    try:
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+        if not user_login:
+            return Response({'status': 'Error', 'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+    except:
+        return Response({'status': 'Error', 'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = CustomUser.objects.get(email=user_login)
     dish_composition = get_object_or_404(DishCompositionRequest, pk=pk)
+    if dish_composition.client==user or user.is_staff or user.is_superuser:
 
-    if dish_composition.status == 'DE':
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    if dish_composition.status != 'DR':
-        return Response({'message': 'Запрос на описание блюда не в статусе черновика'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    empty_fields = []
-    fields = ['body_mass', 'dish_mass', 'dish']
-    for field in fields:
-        if not getattr(dish_composition, field, None):
-            empty_fields.append(field)
-    if empty_fields:
-        empty_fields_str = ', '.join(empty_fields)
-        return Response({'error': f'Заполните поля: {empty_fields_str}'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    dish_composition.status = 'FO'
-    dish_composition.formation_datetime = timezone.now()
-    dish_composition.save()
-    
-    serializer = DishCompositionRequestFlatSerializer(dish_composition).data
-    return Response({'message': 'Запрос на описание блюда сформирован', 'dish_composition': serializer}, status=status.HTTP_200_OK)
+        if dish_composition.status == 'DE':
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        if dish_composition.status != 'DR':
+            return Response({'message': 'Запрос на описание блюда не в статусе черновика'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        empty_fields = []
+        fields = ['body_mass', 'dish_mass', 'dish']
+        for field in fields:
+            if not getattr(dish_composition, field, None):
+                empty_fields.append(field)
+        if empty_fields:
+            empty_fields_str = ', '.join(empty_fields)
+            return Response({'error': f'Заполните поля: {empty_fields_str}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        dish_composition.status = 'FO'
+        dish_composition.formation_datetime = timezone.now()
+        dish_composition.save()
+        
+        serializer = DishCompositionRequestFlatSerializer(dish_composition).data
+        return Response({'message': 'Запрос на описание блюда сформирован', 'dish_composition': serializer}, status=status.HTTP_200_OK)
 
+
+    return Response({'status': 'Error', 'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
 @swagger_auto_schema(method='put', request_body=DishCompositionRequestFlatSerializer)
 @api_view(['PUT'])
+@authentication_classes([])
+@permission_classes([])
 def complete_dish_composition(request, pk):
+    try:
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+        if not user_login:
+            return Response({'status': 'Error', 'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+    except:
+        return Response({'status': 'Error', 'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = CustomUser.objects.get(email=user_login)
     dish_composition = get_object_or_404(DishCompositionRequest, pk=pk)
+    if user.is_staff or user.is_superuser:
 
-    if dish_composition.status == 'DE':
-        return Response({'error': 'Заявка удалена'}, status=status.HTTP_400_BAD_REQUEST)
+        if dish_composition.status == 'DE':
+            return Response({'error': 'Заявка удалена'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if dish_composition.status != 'FO':
+            return Response({'error': 'Заявка должна быть в статусе Formed'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        action = request.data.get('action')
+
+        if not action or action not in ['complete', 'reject']:
+            return Response({'error': 'Допустимые параметры: complete, reject'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == 'complete':
+            dish_composition.status = 'CO'
+        elif action == 'reject':
+            dish_composition.status = 'RE'
+
+        dish_composition.manager = user
+        dish_composition.completion_datetime = timezone.now()
+        dish_composition.save()
+
+        serializer = DishCompositionRequestSerializer(dish_composition).data
+        return Response({'message': f'Заявка успешно закрыта','dish_composition':serializer}, status=status.HTTP_200_OK)
     
-    if dish_composition.status != 'FO':
-        return Response({'error': 'Заявка должна быть в статусе Formed'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    action = request.data.get('action')
-
-    if not action or action not in ['complete', 'reject']:
-        return Response({'error': 'Допустимые параметры: complete, reject'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if action == 'complete':
-        dish_composition.status = 'CO'
-        dish_composition.completion_date = timezone.now()
-    elif action == 'reject':
-        dish_composition.status = 'RE'
-        dish_composition.completion_date = timezone.now()
-
-    dish_composition.manager = user()
-    dish_composition.date_completion = timezone.now()
-    dish_composition.save()
-
-    serializer = DishCompositionRequestFlatSerializer(dish_composition).data
-    return Response({'message': f'Заявка успешно закрыта','dish_composition':serializer}, status=status.HTTP_200_OK)
+    return Response({'status': 'Error', 'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
 
 @api_view(['GET'])
@@ -254,6 +366,7 @@ def delete_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
 
 @swagger_auto_schema(method='put', request_body=DishCompositionNutrientSerializer)
 @api_view(['PUT'])
+@permission_classes([IsManager])
 def put_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
     dish_composition = get_object_or_404(DishCompositionRequest, pk=dish_composition_pk)
     nutrient = get_object_or_404(Nutrient, pk=nutrient_pk)
@@ -334,6 +447,17 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     model_class = CustomUser
 
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            permission_classes = [AllowAny]
+        elif self.action in ['list']:
+            permission_classes = [IsAdmin | IsManager]
+        else:
+            permission_classes = [IsAdmin]
+        return [permission() for permission in permission_classes]
+
+
     def create(self, request):
         """
         Функция регистрации новых пользователей
@@ -350,8 +474,7 @@ class UserViewSet(viewsets.ModelViewSet):
                                      is_staff=serializer.data['is_staff'])
             return Response({'status': 'Success'}, status=200)
         return Response({'status': 'Error', 'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
+    
 
     # @api_view(['Put'])
     # def put(self, request, pk, format=None):
