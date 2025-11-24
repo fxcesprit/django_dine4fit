@@ -19,6 +19,7 @@ from main.permissions import IsAdmin, IsManager
 
 from .serializers import DishCompositionNutrientSerializer, DishCompositionRequestFlatSerializer, DishCompositionRequestSerializer, NutrientSerializer, UserSerializer
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .minio import add_pic, delete_pic
 
@@ -56,7 +57,7 @@ def login_view(request):
         random_key = uuid.uuid4()
         session_storage.set(str(random_key), email)
         if user.is_staff or user.is_superuser:
-            response = Response({'status': 'ok', 'detail': {'is_staff': user.is_staff, 'is_superuser': user.is_superuser}})
+            response = Response({'status': 'ok', 'email': user.email, 'detail': {'is_staff': user.is_staff, 'is_superuser': user.is_superuser}})
         else:
             response = Response({'status': 'ok'})
 
@@ -67,10 +68,15 @@ def login_view(request):
         return Response({'status': 'error', 'error': 'login failed'})
 
 
+@swagger_auto_schema(method='post')
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 @csrf_exempt
 def logout_view(request):
-    logout(request._request)
-    return Response({'status': 'Success'})
+    response = Response({'status': 'ok'}, status=status.HTTP_200_OK) 
+    response.delete_cookie("session_id")
+    return response
 
 
 # def user():
@@ -85,7 +91,19 @@ def logout_view(request):
 class NutrientsAPIView(APIView):
     model_class = Nutrient
     serializer_class = NutrientSerializer
-
+    
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='nutrient_search_text',
+                in_=openapi.IN_QUERY,
+                description='Фильтр по названию нутриента',
+                type=openapi.TYPE_STRING,
+                required=False,
+            )
+        ],
+        responses={200: NutrientSerializer(many=True)}
+    )
     def get(self, request, format=None):
         nutrient_search_text = request.GET.get('nutrient_search_text', '')  
         nutrients = self.model_class.objects.filter(name__icontains=nutrient_search_text, is_active = True)
@@ -112,7 +130,7 @@ class NutrientAPIView(APIView):
         serializer = self.serializer_class(nutrient)
         return Response(serializer.data)
     
-    @swagger_auto_schema(request_body=NutrientSerializer)
+    @swagger_auto_schema()
     def post(self, request, pk, format=None):
         ssid = request.COOKIES["session_id"]
         user_login = session_storage.get(ssid).decode('utf-8')
@@ -123,8 +141,6 @@ class NutrientAPIView(APIView):
         user = CustomUser.objects.get(email=user_login)
 
         selected_nutrient = get_object_or_404(self.model_class, pk=pk)
-
-        serializer = self.serializer_class(selected_nutrient) 
 
         try:
             dish_composition_draft = DishCompositionRequest.objects.get(client=user, status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
@@ -137,7 +153,7 @@ class NutrientAPIView(APIView):
             nutrient = selected_nutrient
         )
 
-        return Response(serializer.data)
+        return Response(status=status.HTTP_200_OK)
 
     @swagger_auto_schema(request_body=NutrientSerializer)
     @method_permission_classes((IsManager, ))
@@ -181,13 +197,20 @@ def post_img(request, pk, format=None):
 
 @api_view(['GET'])
 def get_dish_composition_draft(request):
-    current_user = user()
     try:
-        dish_composition_draft = DishCompositionRequest.objects.get(client=current_user, status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+        if not user_login:
+            return Response({'status': 'Error', 'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        user = CustomUser.objects.get(email=user_login)
+
+        dish_composition_draft = DishCompositionRequest.objects.get(client=user, status=DishCompositionRequest.CompositionRequestStatus.DRAFT)
         nutrient_types_amount = DishCompositionNutrients.objects.filter(dish_composition_request = dish_composition_draft.pk).count()
+        
         return Response({'dish_composition_draft': {'id': dish_composition_draft.id, 'nutrient_types_amount': nutrient_types_amount}}, status=status.HTTP_200_OK)
     except:
-        return Response({'message': 'dish_composition_draft not created'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'dish_composition_draft': {'id': -1, 'nutrient_types_amount': 0}}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -215,7 +238,7 @@ def get_dish_compositions(request):
         )
     
     
-    dish_composition_status = request.GET.get('dish_composition_status')
+    dish_composition_status = request.GET.get('status')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
 
@@ -231,8 +254,24 @@ def get_dish_compositions(request):
 
 @swagger_auto_schema(method='put', request_body=DishCompositionRequestSerializer)
 @api_view(['PUT'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def put_dish_composition(request, pk):
+    try:
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+        if not user_login:
+            return Response({'status': 'Error', 'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+    except:
+        return Response({'status': 'Error', 'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = CustomUser.objects.get(email=user_login)
+
     dish_composition = get_object_or_404(DishCompositionRequest, pk=pk)
+
+    if not user.is_superuser and not user.is_staff and dish_composition.client != user:
+        return Response({'status': 'Error', 'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
     serializer = DishCompositionRequestSerializer(dish_composition, data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
@@ -241,8 +280,23 @@ def put_dish_composition(request, pk):
 
 
 @api_view(['DELETE'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def delete_dish_composition(request, pk):
+    try:
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+        if not user_login:
+            return Response({'status': 'Error', 'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+    except:
+        return Response({'status': 'Error', 'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = CustomUser.objects.get(email=user_login)
+    
     dish_composition = get_object_or_404(DishCompositionRequest, pk=pk)
+    
+    if not user.is_superuser and not user.is_staff and dish_composition.client != user:
+        return Response({'status': 'Error', 'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
     if dish_composition.status == 'DE':
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -348,14 +402,29 @@ def get_dish_composition(request, pk):
 
 
 @api_view(['DELETE'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def delete_dish_composition_nutrient(request, dish_composition_pk, nutrient_pk):
-    dish_composition = get_object_or_404(dish_composition, pk=dish_composition_pk)
+    try:
+        ssid = request.COOKIES["session_id"]
+        user_login = session_storage.get(ssid).decode('utf-8')
+        if not user_login:
+            return Response({'status': 'Error', 'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+    except:
+        return Response({'status': 'Error', 'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = CustomUser.objects.get(email=user_login)
+
+    dish_composition = get_object_or_404(DishCompositionRequest, pk=dish_composition_pk)
+    
+    if not user.is_superuser and not user.is_staff and dish_composition.client != user:
+        return Response({'status': 'Error', 'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
     if dish_composition.status == 'DE':
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     nutrient = get_object_or_404(Nutrient, pk=nutrient_pk)
-    dish_composition_nutrient = DishCompositionNutrients.objects.get(nutrient=nutrient, dish_composition=dish_composition)
+    dish_composition_nutrient = DishCompositionNutrients.objects.get(nutrient=nutrient, dish_composition_request=dish_composition)
 
     if dish_composition_nutrient:
         dish_composition_nutrient.delete()

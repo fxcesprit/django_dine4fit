@@ -8,7 +8,7 @@ from .models import CustomUser
 class NutrientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Nutrient
-        fields = ('name', 'daily_dose_min', 'daily_dose_max', 'short_desc', 'full_desc', 'img_url')
+        fields = ('id', 'name', 'daily_dose_min', 'daily_dose_max', 'short_desc', 'full_desc', 'img_url')
 
         def get_fields(self):
             new_fields = OrderedDict()
@@ -42,10 +42,11 @@ class DishCompositionRequestSerializer(serializers.ModelSerializer):
     )
     client = serializers.CharField(source='client.username', read_only=True)
     manager = serializers.CharField(source='manager.username', read_only=True)
+    dish = serializers.CharField(source='dish.name', read_only=True)
     class Meta:
         model = DishCompositionRequest
-        fields = ('status', 'creation_datetime', 'formation_datetime', 'completion_datetime', 'client', 'manager', 'body_mass', 'dish_mass', 'dish', 'nutrients')
-        read_only_fields = ('status', 'creation_datetime', 'formation_datetime', 'completion_datetime', 'client', 'manager')
+        fields = ('id', 'status', 'creation_datetime', 'formation_datetime', 'completion_datetime', 'client', 'manager', 'body_mass', 'dish_mass', 'dish', 'nutrients')
+        read_only_fields = ('id', 'status', 'creation_datetime', 'formation_datetime', 'completion_datetime', 'client', 'manager')
 
         def get_fields(self):
             new_fields = OrderedDict()
