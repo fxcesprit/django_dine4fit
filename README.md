@@ -1,4 +1,4 @@
-# django_dine4fit
+# Основной сервис Django
 
 Фронтенд: https://github.com/fxcesprit/django_dine4fit
 
