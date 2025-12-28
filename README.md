@@ -1,2 +1,5 @@
 # django_dine4fit
-Лабораторные по курсу РИП на django
+
+Фронтенд: https://github.com/fxcesprit/django_dine4fit
+
+Асинхронный сервис: https://github.com/fxcesprit/Async-service
